@@ -124,17 +124,37 @@ curl localhost:8000/api/users/1/calendar/ -H "Authorization: Bearer $TOKEN"
 From the repo root (`pytest` is configured in `pyproject.toml` to find `src/`):
 
 ```bash
-JWT_SECRET_KEY=test-secret uv run pytest
+uv run pytest
 ```
+
+No environment variables are needed: `tests/conftest.py` sets a test `JWT_SECRET_KEY` and
+points the app at a throwaway in-memory SQLite database, so the tests never read or
+modify `gradvision.db`. Every test starts with a fresh, empty database.
 
 Useful variants:
 
 ```bash
-uv run pytest -v                             # list each test (JWT_SECRET_KEY must be exported)
-uv run pytest tests/test_api.py::test_root   # run a single test
+uv run pytest -v                                       # list each test
+uv run pytest tests/test_tasks.py                      # one file
+uv run pytest tests/test_auth.py::TestRefresh          # one class
+uv run pytest -k "forbidden or 403"                    # tests matching a keyword
+uv run pytest -rx                                      # show why each expected failure is marked xfail
 ```
 
-Tests currently use the default database (`gradvision.db`). Point `DATABASE_URL` at a throwaway file (e.g. `DATABASE_URL=sqlite:///./test.db`) if you don't want to touch your dev data.
+Test layout (`tests/`):
+
+| File | Covers |
+|---|---|
+| `conftest.py` | Shared fixtures: `client`, `user`, `other_user`, `make_user`, `seeded_catalog`, `db_session` |
+| `test_auth.py` | Login, token refresh/rotation, logout, access-token validation |
+| `test_users.py` | Signup, profile get/update/delete, saved programs |
+| `test_applications.py`, `test_tasks.py` | Applications, tasks, calendar, ownership checks |
+| `test_public_catalog.py`, `test_search.py` | Universities, programs, papers, search |
+| `test_security_access.py` | Every protected route returns 401 without a valid token |
+
+Tests marked `xfail` document known bugs: they assert the *correct* behaviour and are
+expected to fail until the bug is fixed. They are `strict`, so once a bug is fixed the
+test fails as an unexpected pass, which is the cue to delete its `xfail` marker.
 
 ## Repository Structure
 
@@ -148,7 +168,7 @@ src/app/
   api/deps.py    get_current_user (JWT validation)
   core/          Database session, JWT/password security, error handlers
 alembic/         Database migrations
-scripts/         seed_db.py (mock data) and smoke-test scripts
+scripts/         seed_db.py (mock data) and db_smoke_test.py
 tests/           pytest suite
 docs/            OpenAPI spec and design docs
 ```

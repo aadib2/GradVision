@@ -5,6 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from app.schemas.base import PartialUpdate
 from app.schemas.past_education import PastEducation, PastEducationCreate
 
 
@@ -16,8 +17,21 @@ class UserCreate(BaseModel):
     past_education: list[PastEducationCreate] = Field(default_factory=list)
 
 
-class UserUpdate(BaseModel):
+class UserUpdate(PartialUpdate):
     """All fields optional — only send what you want to change."""
+    # personal_statement is nullable, so it can be cleared with null. password and
+    # past_education are left out: the CRUD layer already ignores a null for them.
+    non_nullable = frozenset(
+        {
+            "first_name",
+            "last_name",
+            "email",
+            "research_interests",
+            "career_goals",
+            "program_interests",
+        }
+    )
+
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     email: Optional[EmailStr] = None

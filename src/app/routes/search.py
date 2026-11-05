@@ -23,8 +23,8 @@ def search_universities_endpoint(
     location: str | None = None,
     search: str | None = None,
     program_fields: list[str] | None = Query(None),
-    limit: int = 50,
-    offset: int = 0,
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
     return search_universities(

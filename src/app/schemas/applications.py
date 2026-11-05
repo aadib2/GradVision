@@ -6,6 +6,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 from app.models.models import ApplicationStatus
+from app.schemas.base import PartialUpdate
 
 
 class Application(BaseModel):
@@ -26,7 +27,17 @@ class Application(BaseModel):
     updated_at: datetime
 
 
-class ApplicationUpdate(BaseModel):
+class ApplicationUpdate(PartialUpdate):
+    non_nullable = frozenset(
+        {
+            "status",
+            "transcripts_done",
+            "recommendations_done",
+            "statement_done",
+            "test_scores_done",
+        }
+    )
+
     status: Optional[ApplicationStatus] = None
     transcripts_done: Optional[bool] = None
     recommendations_done: Optional[bool] = None
@@ -41,7 +52,9 @@ class TaskCreate(BaseModel):
     application_id: Optional[int] = None
 
 
-class TaskUpdate(BaseModel):
+class TaskUpdate(PartialUpdate):
+    non_nullable = frozenset({"title", "completed"})
+
     title: Optional[str] = None
     due_date: Optional[datetime] = None
     completed: Optional[bool] = None
